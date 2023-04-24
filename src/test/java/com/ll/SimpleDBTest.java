@@ -18,9 +18,26 @@ class SimpleDBTest {
         createArticleTable();
     }
 
+    private void createArticleTable() {
+        simpleDB.run("DROP TABLE IF EXISTS ARTICLE");
+
+        simpleDB.run("""
+                CREATE TABLE article (
+                                    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                                    PRIMARY KEY(id),
+                                    createdDate DATETIME NOT NULL,
+                                    modifiedDate DATETIME NOT NULL,
+                                    title VARCHAR(100) NOT NULL,
+                                    `body` TEXT NOT NULL,
+                                    isBlind BIT(1) NOT NULL DEFAULT(0)
+                """);
+    }
+
     @BeforeEach
     void beforeEach() {
         truncateArticleTable();
         makeArticleTestData();
     }
+
+
 }
