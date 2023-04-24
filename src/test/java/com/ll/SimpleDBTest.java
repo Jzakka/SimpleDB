@@ -15,14 +15,14 @@ class SimpleDbTest {
 
     @BeforeAll
     void beforeAll() {
-        simpleDb = new SimpleDb("localhost", "root", "", "SimpleDb_test");
+        simpleDb = new SimpleDb("192.168.2.131", "lldj", "lldj123414", "SimpleDb_test");
         simpleDb.setDevMode(true);
 
         createArticleTable();
     }
 
     private void createArticleTable() {
-        simpleDb.run("DROP TABLE IF EXISTS ARTICLE");
+        simpleDb.run("DROP TABLE IF EXISTS article");
 
         simpleDb.run("""
                 CREATE TABLE article (
@@ -33,6 +33,7 @@ class SimpleDbTest {
                                     title VARCHAR(100) NOT NULL,
                                     `body` TEXT NOT NULL,
                                     isBlind BIT(1) NOT NULL DEFAULT(0)
+                )
                 """);
     }
 

@@ -1,9 +1,8 @@
 package com.ll;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SimpleDb {
     private String url;
@@ -13,7 +12,7 @@ public class SimpleDb {
     private boolean devMode;
 
     public SimpleDb(String host, String username, String password, String dbName) {
-        this.url = "jdbc:mysql://%s:3306/%s?serverTimezone=Asia/Seoul&useSSL=false".formatted(host,dbName);
+        this.url = "jdbc:mysql://%s:3306/%s?serverTimezone=Asia/Seoul&useSSL=false".formatted(host, dbName);
         this.username = username;
         this.password = password;
         this.dbName = dbName;
@@ -23,30 +22,37 @@ public class SimpleDb {
         this.devMode = devMode;
     }
 
-    public void run(String query, Object... parameter) {
+    public Object run(String query, Object... parameter) {
+        String queryType = getQueryType(query);
         Connection conn = null;
+        Object result = 0;
         try {
-            Class.forName("com.mysql.jdbc.Driver");
             conn = DriverManager.getConnection(url, username, password);
+            PreparedStatement ps;
 
-            PreparedStatement ps = conn.prepareStatement(query);
-
-            if (parameter.length >0) {
-                ps.setString(1, (String)parameter[0]);
-                ps.setString(2, (String)parameter[1]);
-                ps.setBoolean(3, (Boolean) parameter[2]);
+            if (queryType.equals("INSERT")) {
+                ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+            } else {
+                ps = conn.prepareStatement(query);
             }
+            bindParameter(ps, parameter);
 
             if (this.devMode) {
                 logQuery(ps);
             }
 
-            ps.execute();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e.getMessage());
+            if (queryType.equals("INSERT")) {
+                ps.executeUpdate();
+                ResultSet generatedKeys = ps.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    result = generatedKeys.getLong(1);
+                }
+            } else {
+                result = ps.execute();
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage());
-        }finally {
+        } finally {
             if (conn != null) {
                 try {
                     conn.close();
@@ -54,6 +60,22 @@ public class SimpleDb {
                     throw new RuntimeException(e);
                 }
             }
+        }
+        return result;
+    }
+
+    private String getQueryType(String query) {
+        Pattern pattern = Pattern.compile("^\\s*(\\w+)", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(query);
+        if (matcher.find()) {
+            return matcher.group(1).toUpperCase();
+        }
+        throw new IllegalArgumentException("Invalid query format");
+    }
+
+    private void bindParameter(PreparedStatement ps, Object[] parameters) throws SQLException {
+        for (int i = 0; i < parameters.length; i++) {
+            ps.setObject(i + 1, parameters[i]);
         }
     }
 
@@ -64,6 +86,6 @@ public class SimpleDb {
     }
 
     public Sql genSql() {
-        return new Sql();
+        return new Sql(this);
     }
 }
