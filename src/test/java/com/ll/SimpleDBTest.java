@@ -6,24 +6,22 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class SimpleDBTest {
-    private SimpleDB simpleDB;
+class SimpleDbTest {
+    private SimpleDb simpleDb;
 
     @BeforeAll
     void beforeAll() {
-        simpleDB = new SimpleDB("localhost", "root", "", "simpleDB_test");
-        simpleDB.setDevMode(true);
+        simpleDb = new simpleDb("localhost", "root", "", "SimpleDb_test");
+        simpleDb.setDevMode(true);
 
         createArticleTable();
     }
 
     private void createArticleTable() {
-        simpleDB.run("DROP TABLE IF EXISTS ARTICLE");
+        simpleDb.run("DROP TABLE IF EXISTS ARTICLE");
 
-        simpleDB.run("""
+        simpleDb.run("""
                 CREATE TABLE article (
                                     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
                                     PRIMARY KEY(id),
@@ -41,7 +39,7 @@ class SimpleDBTest {
         makeArticleTestData();
     }
 
-    private void truncateArticleTable() {
+    private void makeArticleTestData() {
         IntStream.rangeClosed(1, 6).forEach(no -> {
             boolean isBlind = no > 3;
             String title = "제목%d".formatted(no);
@@ -56,6 +54,10 @@ class SimpleDBTest {
                     isBlind = ?
                     """, title, body, isBlind);
         });
+    }
+
+    private void truncateArticleTable() {
+        simpleDb.run("TRUNCATE article");
     }
 
 
