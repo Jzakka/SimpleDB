@@ -12,7 +12,7 @@ class SimpleDbTest {
 
     @BeforeAll
     void beforeAll() {
-        simpleDb = new simpleDb("localhost", "root", "", "SimpleDb_test");
+        simpleDb = new SimpleDb("localhost", "root", "", "SimpleDb_test");
         simpleDb.setDevMode(true);
 
         createArticleTable();
