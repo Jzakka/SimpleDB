@@ -14,4 +14,8 @@ public class SimpleDb {
 
     public void run(String query, Object... parameter) {
     }
+
+    public Sql genSql() {
+        return null;
+    }
 }
