@@ -289,4 +289,25 @@ class SimpleDbTest {
 
         assertThat(count).isEqualTo(3);
     }
+
+    @Test
+    public void selectOrderByField() {
+        List<Long> ids = Arrays.asList(2L, 3L, 1L);
+
+        Sql sql = simpleDb.genSql();
+        /*
+        SELECT id
+        FROM article
+        WHERE id IN ('2','3','1')
+        ORDER BY FIELD (id, '2','3','1')
+        */
+        sql.append("SELECT id")
+                .append("FROM article")
+                .appendIn("WHERE id IN (?)", ids)
+                .appendIn("ORDER BY FIELD (id, ?)", ids);
+
+        List<Long> foundIds = sql.selectLongs();
+
+        assertThat(foundIds).isEqualTo(ids);
+    }
 }
