@@ -79,19 +79,7 @@ public class SimpleDb {
                 logQuery(ps);
             }
 
-            if (queryType.equals("INSERT")) {
-                ps.executeUpdate();
-                ResultSet generatedKeys = ps.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    result = generatedKeys.getLong(1);
-                }
-            } else if(queryType.equals("UPDATE")){
-                result = ps.executeUpdate();
-            } else if(queryType.equals("DELETE")){
-                result = ps.executeUpdate();
-            }else {
-                result = ps.execute();
-            }
+            return executeQuery(ps, queryType);
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage());
         } finally {
@@ -103,7 +91,24 @@ public class SimpleDb {
                 }
             }
         }
-        return result;
+    }
+
+    private Object executeQuery(PreparedStatement query, String type) throws SQLException {
+        switch (type) {
+            case "INSERT":
+                query.executeUpdate();
+                ResultSet generatedKeys = query.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    return generatedKeys.getLong(1);
+                }
+                break;
+            case "UPDATE":
+            case "DELETE":
+                return query.executeUpdate();
+            default:
+                return query.execute();
+        }
+        return -1;
     }
 
     private String getQueryType(String query) {
