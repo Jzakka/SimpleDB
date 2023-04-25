@@ -7,6 +7,7 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -265,6 +266,24 @@ class SimpleDbTest {
                 .append("FROM article")
                 .append("WHERE id BETWEEN ? AND ?", 1, 3)
                 .append("AND title LIKE CONCAT('%', ? '%')", "제목");
+
+        long count = sql.selectLong();
+
+        assertThat(count).isEqualTo(3);
+    }
+
+    @Test
+    public void selectIn() {
+        Sql sql = simpleDb.genSql();
+        /*
+        == rawSql ==
+        SELECT COUNT(*)
+        FROM article
+        WHERE id IN ('1','2','3')
+        */
+        sql.append("SELECT COUNT(*)")
+                .append("FROM article")
+                .appendIn("WHERE id IN (?)", Arrays.asList(1L, 2L, 3L));
 
         long count = sql.selectLong();
 
