@@ -7,6 +7,7 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -182,5 +183,25 @@ class SimpleDbTest {
         String title = sql.selectString();
 
         assertThat(title).isEqualTo("제목1");
+    }
+
+    @Test
+    public void selectRow() {
+        Sql sql = simpleDb.genSql();
+        /*
+        == rawSql ==
+        SELECT *
+        FROM article
+        WHERE id = 1
+        */
+        sql.append("SELECT * FROM article WHERE id = 1");
+        Map<String, Object> articleMap = sql.selectRow();
+
+        assertThat(articleMap.get("id")).isEqualTo(1L);
+        assertThat(articleMap.get("title")).isEqualTo("제목1");
+        assertThat(articleMap.get("body")).isEqualTo("내용1");
+        assertThat(articleMap.get("createdDate")).isInstanceOf(LocalDateTime.class);
+        assertThat(articleMap.get("modifiedDate")).isInstanceOf(LocalDateTime.class);
+        assertThat(articleMap.get("isBlind")).isEqualTo(false);
     }
 }
