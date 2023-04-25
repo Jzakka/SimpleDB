@@ -250,4 +250,24 @@ class SimpleDbTest {
             assertThat(articleDto.isBlind()).isFalse();
         });
     }
+
+    @Test
+    public void selectBind() {
+        Sql sql = simpleDb.genSql();
+        /*
+        == rawSql ==
+        SELECT COUNT(*)
+        FROM article
+        WHERE id BETWEEN '1' AND '3'
+        AND title LIKE CONCAT('%', '제목' '%')
+        */
+        sql.append("SELECT COUNT(*)")
+                .append("FROM article")
+                .append("WHERE id BETWEEN ? AND ?", 1, 3)
+                .append("AND title LIKE CONCAT('%', ? '%')", "제목");
+
+        long count = sql.selectLong();
+
+        assertThat(count).isEqualTo(3);
+    }
 }
