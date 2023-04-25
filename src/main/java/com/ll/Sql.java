@@ -7,14 +7,17 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Sql {
     StringBuilder queryStatement = new StringBuilder();
     ArrayList<Object> parameters = new ArrayList<>();
     SimpleDb simpleDb;
+    ObjectMapper objectMapper = new ObjectMapper();
 
     public Sql(SimpleDb simpleDb) {
         this.simpleDb = simpleDb;
+        objectMapper.registerModule(new JavaTimeModule());
     }
 
     public Sql append(String queryPhrase, Object... parameter) {
@@ -48,7 +51,11 @@ public class Sql {
     }
 
     public Map<String, Object> selectRow() {
-        return ((List<Map<String, Object>>)result()).stream().findFirst().orElseThrow();
+        return selectRows().stream().findFirst().orElseThrow();
+    }
+
+    private List<Map<String, Object>> selectRows() {
+        return (List<Map<String, Object>>) result();
     }
 
     private Object singleDataOfFirstColumn() {
@@ -60,10 +67,14 @@ public class Sql {
     }
 
     public <T> T selectRow(Class<T> classObject) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
         Map<String, Object> mapObject = selectRow();
         T entity = objectMapper.convertValue(mapObject, classObject);
         return entity;
+    }
+
+    public <T> List<T> selectRows(Class<T> classObject) {
+        return selectRows().stream()
+                .map(row -> objectMapper.convertValue(row, classObject))
+                .collect(Collectors.toList());
     }
 }
