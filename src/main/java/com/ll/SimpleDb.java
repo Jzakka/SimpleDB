@@ -5,6 +5,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -63,7 +65,6 @@ public class SimpleDb {
     public Object run(String query, Object... parameter) {
         String queryType = getQueryType(query);
         Connection conn = null;
-        Object result = 0;
         try {
             conn = DriverManager.getConnection(url, username, password);
             PreparedStatement ps;
@@ -95,6 +96,18 @@ public class SimpleDb {
 
     private Object executeQuery(PreparedStatement query, String type) throws SQLException {
         switch (type) {
+            case "SELECT":
+                ResultSet resultSet = query.executeQuery();
+                int colLen = resultSet.getMetaData().getColumnCount();
+                List<Object[]> datum = new ArrayList<>();
+                while (resultSet.next()) {
+                    Object[] data = new Object[colLen];
+                    for (int i = 1; i <=colLen; i++) {
+                        data[i - 1] = resultSet.getObject(i);
+                    }
+                    datum.add(data);
+                }
+                return datum;
             case "INSERT":
                 query.executeUpdate();
                 ResultSet generatedKeys = query.getGeneratedKeys();

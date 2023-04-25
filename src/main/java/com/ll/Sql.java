@@ -2,6 +2,7 @@ package com.ll;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,14 +22,22 @@ public class Sql {
     }
 
     public long insert() {
-        return (long) simpleDb.run(queryStatement.toString(), parameters.toArray(Object[]::new));
+        return (long) result();
     }
 
     public long update() {
-        return (long) (int) simpleDb.run(queryStatement.toString(), parameters.toArray(Object[]::new));
+        return (long) (int) result();
     }
 
     public long delete() {
-        return (long) (int) simpleDb.run(queryStatement.toString(), parameters.toArray(Object[]::new));
+        return (long) (int) result();
+    }
+
+    public LocalDateTime selectDatetime() {
+        return (LocalDateTime) ((List<Object[]>)result()).get(0)[0];
+    }
+
+    private Object result() {
+        return simpleDb.run(queryStatement.toString(), parameters.toArray(Object[]::new));
     }
 }
