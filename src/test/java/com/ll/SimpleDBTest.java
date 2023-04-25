@@ -108,4 +108,25 @@ class SimpleDbTest {
 
         assertThat(affectedRowsCount).isEqualTo(3);
     }
+
+    @Test
+    public void delete() {
+        Sql sql = simpleDb.genSql();
+
+        // id가 0, 1, 3인 글 삭제
+        // id가 0인 글은 없으니, 실제로는 2개의 글이 삭제됨
+        /*
+        == rawSql ==
+        DELETE FROM article
+        WHERE id IN ('0', '1', '3')
+        */
+        sql.append("DELETE")
+                .append("FROM article")
+                .append("WHERE id IN (?, ?, ?)", 0, 1, 3);
+
+        // 삭제된 row 개수
+        long affectedRowsCount = sql.delete();
+
+        assertThat(affectedRowsCount).isEqualTo(2);
+    }
 }
