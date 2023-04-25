@@ -7,28 +7,27 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class SimpleDb {
     private String url;
     private final String username;
     private final String password;
-    private final String dbName;
     private boolean devMode;
 
     public SimpleDb(String host, String username, String password, String dbName) {
         this.url = "jdbc:mysql://%s:3306/%s?serverTimezone=Asia/Seoul&useSSL=false".formatted(host, dbName);
         this.username = username;
         this.password = password;
-        this.dbName = dbName;
 
-        try (Connection connection = DriverManager.getConnection(
-                "jdbc:mysql://%s:3306?serverTimezone=Asia/Seoul&useSSL=false".formatted(host), username, password)) {
+        if (devMode) {
+            truncate(host, username, password);
+        }
+    }
+
+    private void truncate(String host, String username, String password) {
+        String initConnectionUrl = "jdbc:mysql://%s:3306?serverTimezone=Asia/Seoul&useSSL=false".formatted(host);
+
+        try (Connection connection = DriverManager.getConnection(initConnectionUrl, username, password)) {
             executeSqlScript(connection, "/db/init.sql");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -67,44 +66,55 @@ public class SimpleDb {
     }
 
     public Object run(String query, Object... parameter) {
-        String queryType = getQueryType(query);
+        String queryType = Query.getQueryType(query);
         Connection conn = null;
+        PreparedStatement ps = null;
         try {
             conn = DriverManager.getConnection(url, username, password);
-            PreparedStatement ps;
 
-            if (queryType.equals("INSERT")) {
-                ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
-            } else {
-                ps = conn.prepareStatement(query);
-            }
-            bindParameter(ps, parameter);
+            ps = prepareStatement(queryType, query, conn, parameter);
 
-            if (this.devMode) {
-                logQuery(ps);
-            }
+            logQuery(ps);
 
             return Query.execute(ps, queryType);
         } catch (SQLException e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException();
         } finally {
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
+            closePreparedStatement(ps);
+
+            closeConnection(conn);
+        }
+    }
+
+    private void closeConnection(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         }
     }
 
-    private String getQueryType(String query) {
-        Pattern pattern = Pattern.compile("^\\s*(\\w+)", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(query);
-        if (matcher.find()) {
-            return matcher.group(1).toUpperCase();
+    private void closePreparedStatement(PreparedStatement ps) {
+        if (ps != null) {
+            try {
+                ps.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-        throw new IllegalArgumentException("Invalid query format");
+    }
+
+    private PreparedStatement prepareStatement(String queryType, String query, Connection conn, Object... parameter) throws SQLException {
+        PreparedStatement ps;
+        if (queryType.equals("INSERT")) {
+            ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+        } else {
+            ps = conn.prepareStatement(query);
+        }
+        bindParameter(ps, parameter);
+        return ps;
     }
 
     private void bindParameter(PreparedStatement ps, Object[] parameters) throws SQLException {
@@ -114,9 +124,11 @@ public class SimpleDb {
     }
 
     private void logQuery(PreparedStatement ps) {
-        System.out.println("== rawSql ==");
-        System.out.println(ps.toString().split(": ")[1]);
-        System.out.println();
+        if (this.devMode) {
+            System.out.println("== rawSql ==");
+            System.out.println(ps.toString().split(": ")[1]);
+            System.out.println();
+        }
     }
 
     public Sql genSql() {
