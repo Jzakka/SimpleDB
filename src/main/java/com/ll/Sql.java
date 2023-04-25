@@ -26,7 +26,7 @@ public class Sql {
 
     public <T> Sql appendIn(String inPhrase, List<T> inParameters) {
         String concatedParams = String.join(",", inParameters.stream().map(Object::toString).toArray(String[]::new));
-        String bindedInPhrase = inPhrase.replace("?", concatedParams);
+        String bindedInPhrase = inPhrase.replace("?", concatedParams)+'\n';
         queryStatement.append(bindedInPhrase);
         return this;
     }
@@ -80,6 +80,15 @@ public class Sql {
     public <T> List<T> selectRows(Class<T> classObject) {
         return selectRows().stream()
                 .map(row -> objectMapper.convertValue(row, classObject))
+                .collect(Collectors.toList());
+    }
+
+    public List<Long> selectLongs() {
+        return selectRows().stream()
+                .map(tuple -> (Long) tuple.values().stream()
+                        .filter(prop -> prop instanceof Long)
+                        .findFirst()
+                        .orElse(Long.MIN_VALUE))
                 .collect(Collectors.toList());
     }
 }
