@@ -27,4 +27,8 @@ public class Sql {
     public long update() {
         return (long) (int) simpleDb.run(queryStatement.toString(), parameters.toArray(Object[]::new));
     }
+
+    public long delete() {
+        return (long) (int) simpleDb.run(queryStatement.toString(), parameters.toArray(Object[]::new));
+    }
 }

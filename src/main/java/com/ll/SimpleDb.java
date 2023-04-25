@@ -87,6 +87,8 @@ public class SimpleDb {
                 }
             } else if(queryType.equals("UPDATE")){
                 result = ps.executeUpdate();
+            } else if(queryType.equals("DELETE")){
+                result = ps.executeUpdate();
             }else {
                 result = ps.execute();
             }
