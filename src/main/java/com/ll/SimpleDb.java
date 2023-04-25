@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -97,16 +99,9 @@ public class SimpleDb {
     private Object executeQuery(PreparedStatement query, String type) throws SQLException {
         switch (type) {
             case "SELECT":
+                List<Map<String, Object>> datum = new ArrayList<>();
                 ResultSet resultSet = query.executeQuery();
-                int colLen = resultSet.getMetaData().getColumnCount();
-                List<Object[]> datum = new ArrayList<>();
-                while (resultSet.next()) {
-                    Object[] data = new Object[colLen];
-                    for (int i = 1; i <=colLen; i++) {
-                        data[i - 1] = resultSet.getObject(i);
-                    }
-                    datum.add(data);
-                }
+                mapResult(resultSet, datum);
                 return datum;
             case "INSERT":
                 query.executeUpdate();
@@ -122,6 +117,20 @@ public class SimpleDb {
                 return query.execute();
         }
         return -1;
+    }
+
+    private void mapResult(ResultSet  resultSet, List<Map<String, Object>> datum) throws SQLException {
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        int colLen = metaData.getColumnCount();
+        while (resultSet.next()) {
+            Map<String, Object> data = new HashMap<>();
+            for (int i = 1; i <=colLen; i++) {
+                String columnName = metaData.getColumnName(i);
+                Object content = resultSet.getObject(i);
+                data.put(columnName, content);
+            }
+            datum.add(data);
+        }
     }
 
     private String getQueryType(String query) {

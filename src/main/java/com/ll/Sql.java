@@ -1,10 +1,9 @@
 package com.ll;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Sql {
     StringBuilder queryStatement = new StringBuilder();
@@ -34,22 +33,26 @@ public class Sql {
     }
 
     public LocalDateTime selectDatetime() {
-        return (LocalDateTime) singleData();
+        return (LocalDateTime) singleDataOfFirstColumn();
+    }
+
+    public Long selectLong() {
+        return (Long) singleDataOfFirstColumn();
+    }
+
+    public String selectString() {
+        return (String) singleDataOfFirstColumn();
+    }
+
+    public Map<String, Object> selectRow() {
+        return ((List<Map<String, Object>>)result()).stream().findFirst().orElseThrow();
+    }
+
+    private Object singleDataOfFirstColumn() {
+        return selectRow().values().stream().findFirst().orElse(null);
     }
 
     private Object result() {
         return simpleDb.run(queryStatement.toString(), parameters.toArray(Object[]::new));
-    }
-
-    public Long selectLong() {
-        return (Long) singleData();
-    }
-
-    private Object singleData() {
-        return ((List<Object[]>) result()).get(0)[0];
-    }
-
-    public String selectString() {
-        return (String)singleData();
     }
 }
