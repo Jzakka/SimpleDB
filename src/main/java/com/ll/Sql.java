@@ -24,7 +24,7 @@ public class Sql {
         return this;
     }
 
-    public Sql appendIn(String inPhrase, List<Object> inParameters) {
+    public <T> Sql appendIn(String inPhrase, List<T> inParameters) {
         String concatedParams = String.join(",", inParameters.stream().map(Object::toString).toArray(String[]::new));
         String bindedInPhrase = inPhrase.replace("?", concatedParams);
         queryStatement.append(bindedInPhrase);
