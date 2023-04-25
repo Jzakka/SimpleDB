@@ -15,7 +15,7 @@ class SimpleDbTest {
 
     @BeforeAll
     void beforeAll() {
-        simpleDb = new SimpleDb("192.168.2.131", "lldj", "lldj123414", "SimpleDb_test");
+        simpleDb = new SimpleDb("192.168.2.131", "lldj", "lldj123414", "simpleDb__test");
         simpleDb.setDevMode(true);
 
         createArticleTable();

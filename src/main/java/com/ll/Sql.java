@@ -25,6 +25,6 @@ public class Sql {
     }
 
     public long update() {
-        return 0;
+        return (long) (int) simpleDb.run(queryStatement.toString(), parameters.toArray(Object[]::new));
     }
 }

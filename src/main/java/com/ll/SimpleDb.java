@@ -1,5 +1,9 @@
 package com.ll;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.sql.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,6 +20,40 @@ public class SimpleDb {
         this.username = username;
         this.password = password;
         this.dbName = dbName;
+
+        try (Connection connection = DriverManager.getConnection(
+                "jdbc:mysql://%s:3306?serverTimezone=Asia/Seoul&useSSL=false".formatted(host), username, password)) {
+            executeSqlScript(connection, "/db/init.sql");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void executeSqlScript(Connection connection, String filePath) {
+        String absolutePath = Paths.get("").toAbsolutePath() + filePath;
+        try (BufferedReader reader = new BufferedReader(new FileReader(absolutePath))) {
+            String line;
+            StringBuilder sqlCommand = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                sqlCommand.append(line);
+
+                if (line.endsWith(";")) {
+                    executeUpdate(connection, sqlCommand.toString());
+                    sqlCommand.setLength(0);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void executeUpdate(Connection connection, String sqlCommand) {
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(sqlCommand);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public void setDevMode(boolean devMode) {
@@ -47,7 +85,9 @@ public class SimpleDb {
                 if (generatedKeys.next()) {
                     result = generatedKeys.getLong(1);
                 }
-            } else {
+            } else if(queryType.equals("UPDATE")){
+                result = ps.executeUpdate();
+            }else {
                 result = ps.execute();
             }
         } catch (SQLException e) {
