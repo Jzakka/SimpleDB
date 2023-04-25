@@ -1,5 +1,8 @@
 package com.ll;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,5 +57,13 @@ public class Sql {
 
     private Object result() {
         return simpleDb.run(queryStatement.toString(), parameters.toArray(Object[]::new));
+    }
+
+    public <T> T selectRow(Class<T> classObject) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        Map<String, Object> mapObject = selectRow();
+        T entity = objectMapper.convertValue(mapObject, classObject);
+        return entity;
     }
 }

@@ -204,4 +204,22 @@ class SimpleDbTest {
         assertThat(articleMap.get("modifiedDate")).isInstanceOf(LocalDateTime.class);
         assertThat(articleMap.get("isBlind")).isEqualTo(false);
     }
+
+    @Test
+    public void selectArticle() {
+        Sql sql = simpleDb.genSql();
+        /*
+        == rawSql ==
+        SELECT * FROM article WHERE id = 1
+        */
+        sql.append("SELECT * FROM article WHERE id = 1");
+        Article article = sql.selectRow(Article.class);
+
+        assertThat(article.getId()).isEqualTo(1L);
+        assertThat(article.getTitle()).isEqualTo("제목1");
+        assertThat(article.getBody()).isEqualTo("내용1");
+        assertThat(article.getCreatedDate()).isNotNull();
+        assertThat(article.getModifiedDate()).isNotNull();
+        assertThat(article.isBlind()).isFalse();
+    }
 }
