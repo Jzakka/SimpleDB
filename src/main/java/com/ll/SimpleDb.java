@@ -149,7 +149,7 @@ public class SimpleDb {
     }
 
     private void logQuery(PreparedStatement ps) {
-        System.out.println("=======[QUERY_LOG]========");
+        System.out.println("== rawSql ==");
         System.out.println(ps.toString().split(": ")[1]);
         System.out.println();
     }
