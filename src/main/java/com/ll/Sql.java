@@ -40,4 +40,8 @@ public class Sql {
     private Object result() {
         return simpleDb.run(queryStatement.toString(), parameters.toArray(Object[]::new));
     }
+
+    public Long selectLong() {
+        return (Long)((List<Object[]>)result()).get(0)[0];
+    }
 }
