@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.time.LocalDateTime;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -128,5 +129,21 @@ class SimpleDbTest {
         long affectedRowsCount = sql.delete();
 
         assertThat(affectedRowsCount).isEqualTo(2);
+    }
+
+    @Test
+    public void selectDatetime() {
+        Sql sql = simpleDb.genSql();
+        /*
+        == rawSql ==
+        SELECT NOW()
+        */
+        sql.append("SELECT NOW()");
+
+        LocalDateTime datetime = sql.selectDatetime();
+
+        long diff = ChronoUnit.SECONDS.between(datetime, LocalDateTime.now());
+
+        assertThat(diff).isLessThanOrEqualTo(1L);
     }
 }
