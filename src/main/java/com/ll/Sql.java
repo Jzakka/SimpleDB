@@ -34,7 +34,7 @@ public class Sql {
     }
 
     public LocalDateTime selectDatetime() {
-        return (LocalDateTime) ((List<Object[]>)result()).get(0)[0];
+        return (LocalDateTime) singleData();
     }
 
     private Object result() {
@@ -42,6 +42,14 @@ public class Sql {
     }
 
     public Long selectLong() {
-        return (Long)((List<Object[]>)result()).get(0)[0];
+        return (Long) singleData();
+    }
+
+    private Object singleData() {
+        return ((List<Object[]>) result()).get(0)[0];
+    }
+
+    public String selectString() {
+        return (String)singleData();
     }
 }
