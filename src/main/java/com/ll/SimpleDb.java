@@ -1,5 +1,7 @@
 package com.ll;
 
+import com.ll.query.Query;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -82,7 +84,7 @@ public class SimpleDb {
                 logQuery(ps);
             }
 
-            return executeQuery(ps, queryType);
+            return Query.execute(ps, queryType);
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage());
         } finally {
@@ -93,43 +95,6 @@ public class SimpleDb {
                     throw new RuntimeException(e);
                 }
             }
-        }
-    }
-
-    private Object executeQuery(PreparedStatement query, String type) throws SQLException {
-        switch (type) {
-            case "SELECT":
-                List<Map<String, Object>> datum = new ArrayList<>();
-                ResultSet resultSet = query.executeQuery();
-                mapResult(resultSet, datum);
-                return datum;
-            case "INSERT":
-                query.executeUpdate();
-                ResultSet generatedKeys = query.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    return generatedKeys.getLong(1);
-                }
-                break;
-            case "UPDATE":
-            case "DELETE":
-                return query.executeUpdate();
-            default:
-                return query.execute();
-        }
-        return -1;
-    }
-
-    private void mapResult(ResultSet  resultSet, List<Map<String, Object>> datum) throws SQLException {
-        ResultSetMetaData metaData = resultSet.getMetaData();
-        int colLen = metaData.getColumnCount();
-        while (resultSet.next()) {
-            Map<String, Object> data = new HashMap<>();
-            for (int i = 1; i <=colLen; i++) {
-                String columnName = metaData.getColumnName(i);
-                Object content = resultSet.getObject(i);
-                data.put(columnName, content);
-            }
-            datum.add(data);
         }
     }
 
