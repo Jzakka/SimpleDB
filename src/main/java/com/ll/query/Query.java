@@ -56,12 +56,17 @@ public enum Query {
         int colLen = metaData.getColumnCount();
         while (resultSet.next()) {
             Map<String, Object> data = new HashMap<>();
-            for (int i = 1; i <= colLen; i++) {
-                String columnName = metaData.getColumnName(i);
-                Object content = resultSet.getObject(i);
-                data.put(columnName, content);
-            }
+            mapColumn(resultSet, metaData, colLen, data);
             datum.add(data);
+        }
+    }
+
+    private static void mapColumn(ResultSet resultSet, ResultSetMetaData metaData, int colLen, Map<String, Object> data)
+            throws SQLException {
+        for (int i = 1; i <= colLen; i++) {
+            String columnName = metaData.getColumnName(i);
+            Object content = resultSet.getObject(i);
+            data.put(columnName, content);
         }
     }
 }

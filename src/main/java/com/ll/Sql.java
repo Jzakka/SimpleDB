@@ -85,10 +85,14 @@ public class Sql {
 
     public List<Long> selectLongs() {
         return selectRows().stream()
-                .map(tuple -> (Long) tuple.values().stream()
-                        .filter(prop -> prop instanceof Long)
-                        .findFirst()
-                        .orElse(Long.MIN_VALUE))
+                .map(this::getSingleLong)
                 .collect(Collectors.toList());
+    }
+
+    private Long getSingleLong(Map<String, Object> tuple) {
+        return (Long) tuple.values().stream()
+                .filter(prop -> prop instanceof Long)
+                .findFirst()
+                .orElse(Long.MIN_VALUE);
     }
 }
