@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Sql {
     StringBuilder queryStatement = new StringBuilder();
@@ -25,34 +26,36 @@ public class Sql {
     }
 
     public <T> Sql appendIn(String inPhrase, List<T> inParameters) {
-        String concatedParams = String.join(",", inParameters.stream().map(Object::toString).toArray(String[]::new));
+        String concatedParams = String.join(",", IntStream.range(0, inParameters.size()).mapToObj(i->"?").toArray(String[]::new));
         String bindedInPhrase = inPhrase.replace("?", concatedParams)+'\n';
-        queryStatement.append(bindedInPhrase);
+        append(bindedInPhrase, inParameters.toArray());
         return this;
     }
 
     public long insert() {
-        return (long) result();
+        return result();
     }
 
     public long update() {
-        return (long) (int) result();
+        Integer res = result();
+        return res.longValue();
     }
 
     public long delete() {
-        return (long) (int) result();
+        Integer res = result();
+        return res.longValue();
     }
 
     public LocalDateTime selectDatetime() {
-        return (LocalDateTime) singleDataOfFirstColumn();
+        return singleDataOfFirstColumn();
     }
 
     public Long selectLong() {
-        return (Long) singleDataOfFirstColumn();
+        return singleDataOfFirstColumn();
     }
 
     public String selectString() {
-        return (String) singleDataOfFirstColumn();
+        return singleDataOfFirstColumn();
     }
 
     public Map<String, Object> selectRow() {
@@ -63,8 +66,8 @@ public class Sql {
         return result();
     }
 
-    private Object singleDataOfFirstColumn() {
-        return selectRow().values().stream().findFirst().orElse(null);
+    private <T> T singleDataOfFirstColumn() {
+        return (T) selectRow().values().stream().findFirst().orElse(null);
     }
 
     private <T> T result() {

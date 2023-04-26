@@ -78,7 +78,7 @@ public class SimpleDb {
 
             return Query.execute(ps, queryType);
         } catch (SQLException e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         } finally {
             close(ps);
 
