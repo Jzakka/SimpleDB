@@ -80,29 +80,40 @@ public class SimpleDb {
         } catch (SQLException e) {
             throw new RuntimeException();
         } finally {
-            closePreparedStatement(ps);
+            close(ps);
 
-            closeConnection(conn);
+            close(conn);
         }
     }
 
+    private void close(Object closableObject) {
+        if (closableObject == null) {
+            return;
+        }
+        if (closableObject instanceof Connection) {
+            closeConnection((Connection) closableObject);
+            return;
+        }
+        if (closableObject instanceof PreparedStatement) {
+            closePreparedStatement((PreparedStatement) closableObject);
+            return;
+        }
+        throw new IllegalArgumentException();
+    }
+
     private void closeConnection(Connection conn) {
-        if (conn != null) {
-            try {
-                conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+        try {
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
     private void closePreparedStatement(PreparedStatement ps) {
-        if (ps != null) {
-            try {
-                ps.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+        try {
+            ps.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
