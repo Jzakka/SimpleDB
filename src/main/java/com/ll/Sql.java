@@ -60,21 +60,20 @@ public class Sql {
     }
 
     private List<Map<String, Object>> selectRows() {
-        return (List<Map<String, Object>>) result();
+        return result();
     }
 
     private Object singleDataOfFirstColumn() {
         return selectRow().values().stream().findFirst().orElse(null);
     }
 
-    private Object result() {
+    private <T> T result() {
         return simpleDb.run(queryStatement.toString(), parameters.toArray(Object[]::new));
     }
 
     public <T> T selectRow(Class<T> classObject) {
         Map<String, Object> mapObject = selectRow();
-        T entity = objectMapper.convertValue(mapObject, classObject);
-        return entity;
+        return objectMapper.convertValue(mapObject, classObject);
     }
 
     public <T> List<T> selectRows(Class<T> classObject) {

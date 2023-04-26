@@ -65,7 +65,7 @@ public class SimpleDb {
         this.devMode = devMode;
     }
 
-    public Object run(String query, Object... parameter) {
+    public <T> T run(String query, Object... parameter) {
         String queryType = Query.getQueryType(query);
         Connection conn = null;
         PreparedStatement ps = null;

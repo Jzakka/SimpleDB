@@ -33,12 +33,12 @@ public enum Query {
     DELETE(PreparedStatement::executeUpdate);
     private ThrowingFunction<PreparedStatement, Object, SQLException> method;
 
-    public static Object execute(PreparedStatement ps, String queryType) throws SQLException {
+    public static <T> T execute(PreparedStatement ps, String queryType) throws SQLException {
         try {
             Query query = Query.valueOf(queryType);
-            return query.method.apply(ps);
+            return (T) query.method.apply(ps);
         } catch (IllegalArgumentException e) {
-            return ps.execute();
+            return (T)(Boolean)ps.execute();
         }
     }
 
