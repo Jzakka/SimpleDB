@@ -1,5 +1,6 @@
 package com.ll.query;
 
+import com.ll.function.ThrowingFunction;
 import lombok.AllArgsConstructor;
 
 import java.sql.PreparedStatement;
@@ -62,10 +63,5 @@ public enum Query {
             }
             datum.add(data);
         }
-    }
-
-    @FunctionalInterface
-    public interface ThrowingFunction<T, R, E extends Throwable> {
-        R apply(T value) throws E;
     }
 }
