@@ -92,29 +92,29 @@ public class SimpleDb {
             return;
         }
         if (closableObject instanceof Connection) {
-            closeConnection((Connection) closableObject);
-            closableObject = null;
+            closeConnection();
             return;
         }
         if (closableObject instanceof PreparedStatement) {
-            closePreparedStatement((PreparedStatement) closableObject);
-            closableObject = null;
+            closePreparedStatement();
             return;
         }
         throw new IllegalArgumentException();
     }
 
-    private void closeConnection(Connection conn) {
+    private void closeConnection() {
         try {
             conn.close();
+            conn = null;
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    private void closePreparedStatement(PreparedStatement ps) {
+    private void closePreparedStatement() {
         try {
             ps.close();
+            ps = null;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -165,8 +165,7 @@ public class SimpleDb {
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             } finally {
-                closeConnection(conn);
-                conn = null;
+                closeConnection();
             }
         }
     }
@@ -178,8 +177,7 @@ public class SimpleDb {
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             } finally {
-                closeConnection(conn);
-                conn = null;
+                closeConnection();
             }
         }
     }
