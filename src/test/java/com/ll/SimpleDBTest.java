@@ -7,9 +7,14 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -383,5 +388,52 @@ class SimpleDbTest {
                 .append("from article")
                 .selectLong();
         assertThat(count).isEqualTo(7);
+    }
+
+    @Test
+    void 멀티스레드_테스트() throws ExecutionException, InterruptedException {
+        // Thread pool 생성
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+        // 결과를 담을 List
+        List<Future<Boolean>> futures = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            // Thread pool에 작업 제출. Callable은 작업 결과를 반환할 수 있습니다.
+            int finalI = i;
+            futures.add(executorService.submit(() -> {
+                // 여기에서 SimpleDb를 이용한 작업을 수행.
+                // 예) simpleDb.run(/* query */, /* parameters */);
+                simpleDb.genSql()
+                        .append("INSERT INTO article")
+                        .append("SET createdDate = NOW()")
+                        .append("modifiedDate = NOW()")
+                        .append("title = ?", "dummyArticle%d".formatted(finalI))
+                        .append("`body` = ?", "dummyContent")
+                        .append("isBlind = 1")
+                        .insert();
+
+                Long count = simpleDb.genSql()
+                        .append("SELECT COUNT(*)")
+                        .append("FROM article")
+                        .selectLong();
+
+                // 결과가 기대한 값인지 확인하고 반환.
+                return count == 7+finalI /* 결과 확인 */;
+            }));
+        }
+
+        // 모든 작업이 완료될 때까지 대기.
+        for (Future<Boolean> future : futures) {
+            // get()은 작업이 완료될 때까지 대기하고, 작업 결과를 반환합니다.
+            // 여기서는 Callable에서 반환한 값이 됩니다.
+            boolean result = future.get();
+
+            // 각 작업의 결과가 기대한 값인지 확인.
+            assertThat(result).isTrue();
+        }
+
+        // Thread pool 종료.
+        executorService.shutdown();
     }
 }
