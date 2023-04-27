@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -338,6 +337,38 @@ class SimpleDbTest {
         try {
             simpleDb.startTransaction();
             simpleDb.run("""
+                    INSERT INTO article
+                        SET createdDate = NOW(),
+                        modifiedDate = NOW(),
+                        title = "dummyArticle1",
+                        `body` = "dummyContent",
+                        isBlind = 1
+                    """);
+            simpleDb.run("""
+                    STATEMENT_ERROR
+                    """);
+            simpleDb.run("""
+                    INSERT INTO article
+                        SET createdDate = NOW(),
+                        modifiedDate = NOW(),
+                        title = "dummyArticle3",
+                        `body` = "dummyContent",
+                        isBlind = 1
+                    """);
+        } catch (RuntimeException e) {
+        }
+
+        Sql sql = simpleDb.genSql();
+        Long count = sql.append("select count(*)")
+                .append("from article")
+                .selectLong();
+        assertThat(count).isEqualTo(6);
+    }
+
+    @Test
+    void 트랜잭션_커밋() {
+        simpleDb.startTransaction();
+        simpleDb.run("""
                 INSERT INTO article
                     SET createdDate = NOW(),
                     modifiedDate = NOW(),
@@ -345,23 +376,12 @@ class SimpleDbTest {
                     `body` = "dummyContent",
                     isBlind = 1
                 """);
-            simpleDb.run("""
-                STATEMENT_ERROR
-                """);
-            simpleDb.run("""
-                INSERT INTO article
-                    SET createdDate = NOW(),
-                    modifiedDate = NOW(),
-                    title = "dummyArticle3",
-                    `body` = "dummyContent",
-                    isBlind = 1
-                """);
-        } catch (RuntimeException e) {}
+        simpleDb.commit();
 
         Sql sql = simpleDb.genSql();
         Long count = sql.append("select count(*)")
                 .append("from article")
                 .selectLong();
-        assertThat(count).isEqualTo(6);
+        assertThat(count).isEqualTo(7);
     }
 }
