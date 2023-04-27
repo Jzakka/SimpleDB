@@ -14,6 +14,9 @@ public class SimpleDb {
     private final String password;
     private boolean devMode = true;
 
+    Connection conn = null;
+    PreparedStatement ps = null;
+
     public SimpleDb(String host, String username, String password, String dbName) {
         this.url = "jdbc:mysql://%s:3306/%s?serverTimezone=Asia/Seoul&useSSL=false".formatted(host, dbName);
         this.username = username;
@@ -67,11 +70,10 @@ public class SimpleDb {
 
     public <T> T run(String query, Object... parameter) {
         String queryType = Query.getQueryType(query);
-        Connection conn = null;
-        PreparedStatement ps = null;
         try {
-            conn = DriverManager.getConnection(url, username, password);
-
+            if (conn == null) {
+                conn = DriverManager.getConnection(url, username, password);
+            }
             ps = prepareStatement(queryType, query, conn, parameter);
 
             logQuery(ps);
@@ -79,10 +81,8 @@ public class SimpleDb {
             return Query.execute(ps, queryType);
         } catch (SQLException e) {
             throw new RuntimeException(e);
-        } finally {
+        }finally {
             close(ps);
-
-            close(conn);
         }
     }
 
@@ -92,10 +92,12 @@ public class SimpleDb {
         }
         if (closableObject instanceof Connection) {
             closeConnection((Connection) closableObject);
+            closableObject = null;
             return;
         }
         if (closableObject instanceof PreparedStatement) {
             closePreparedStatement((PreparedStatement) closableObject);
+            closableObject = null;
             return;
         }
         throw new IllegalArgumentException();
@@ -144,5 +146,40 @@ public class SimpleDb {
 
     public Sql genSql() {
         return new Sql(this);
+    }
+
+    public void startTransaction() {
+        try {
+            conn = DriverManager.getConnection(url, username, password);
+            conn.setAutoCommit(false); // disable auto commit
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void commit() {
+        if (conn != null) {
+            try {
+                conn.commit();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            } finally {
+                closeConnection(conn);
+                conn = null;
+            }
+        }
+    }
+
+    public void rollback() {
+        if (conn != null) {
+            try {
+                conn.rollback();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            } finally {
+                closeConnection(conn);
+                conn = null;
+            }
+        }
     }
 }

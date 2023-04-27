@@ -329,6 +329,6 @@ class SimpleDbTest {
                 .append("from article")
                 .selectLong();
 
-        assertThat(count).isEqualTo(0);
+        assertThat(count).isEqualTo(6);
     }
 }
