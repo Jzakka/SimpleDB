@@ -90,6 +90,7 @@ class SimpleDbTest {
 
         assertThat(newId).isGreaterThan(0);
     }
+
     @Test
     public void update() {
         Sql sql = simpleDb.genSql();
@@ -309,5 +310,25 @@ class SimpleDbTest {
         List<Long> foundIds = sql.selectLongs();
 
         assertThat(foundIds).isEqualTo(ids);
+    }
+
+    @Test
+    void 트랜잭션_롤백_테스트() {
+        simpleDb.startTransaction();
+        simpleDb.run("""
+                INSERT INTO article
+                    SET createdDate = NOW(),
+                    modifiedDate = NOW(),
+                    title = "dummyArticle",
+                    `body` = "dummyContent",
+                    isBlind = 1
+                """);
+        simpleDb.rollback();
+        Sql sql = simpleDb.genSql();
+        Long count = sql.append("select count(*)")
+                .append("from article")
+                .selectLong();
+
+        assertThat(count).isEqualTo(0);
     }
 }

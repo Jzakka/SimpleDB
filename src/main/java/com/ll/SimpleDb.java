@@ -12,7 +12,7 @@ public class SimpleDb {
     private String url;
     private final String username;
     private final String password;
-    private boolean devMode;
+    private boolean devMode = true;
 
     public SimpleDb(String host, String username, String password, String dbName) {
         this.url = "jdbc:mysql://%s:3306/%s?serverTimezone=Asia/Seoul&useSSL=false".formatted(host, dbName);
