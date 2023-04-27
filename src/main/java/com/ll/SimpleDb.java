@@ -14,6 +14,7 @@ public class SimpleDb {
     private final String password;
     private boolean devMode = true;
 
+    private boolean inTransaction = false;
     Connection conn = null;
     PreparedStatement ps = null;
 
@@ -84,6 +85,10 @@ public class SimpleDb {
             throw new RuntimeException(e);
         }finally {
             close(ps);
+
+            if (!inTransaction) {
+                close(conn);
+            }
         }
     }
 
@@ -108,6 +113,8 @@ public class SimpleDb {
             conn = null;
         } catch (SQLException e) {
             e.printStackTrace();
+        }finally {
+            inTransaction = false;
         }
     }
 
@@ -151,6 +158,7 @@ public class SimpleDb {
 
     public void startTransaction() {
         try {
+            inTransaction = true;
             conn = DriverManager.getConnection(url, username, password);
             conn.setAutoCommit(false); // disable auto commit
         } catch (SQLException e) {
