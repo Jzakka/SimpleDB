@@ -80,6 +80,7 @@ public class SimpleDb {
 
             return Query.execute(ps, queryType);
         } catch (SQLException e) {
+            rollback();
             throw new RuntimeException(e);
         }finally {
             close(ps);
