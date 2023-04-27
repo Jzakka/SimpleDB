@@ -396,9 +396,9 @@ class SimpleDbTest {
         ExecutorService executorService = Executors.newFixedThreadPool(10);
 
         // 결과를 담을 List
-        List<Future<Boolean>> futures = new ArrayList<>();
+        List<Future<Article>> futures = new ArrayList<>();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 100; i++) {
             // Thread pool에 작업 제출. Callable은 작업 결과를 반환할 수 있습니다.
             int finalI = i;
             futures.add(executorService.submit(() -> {
@@ -406,34 +406,44 @@ class SimpleDbTest {
                 // 예) simpleDb.run(/* query */, /* parameters */);
                 simpleDb.genSql()
                         .append("INSERT INTO article")
-                        .append("SET createdDate = NOW()")
-                        .append("modifiedDate = NOW()")
-                        .append("title = ?", "dummyArticle%d".formatted(finalI))
-                        .append("`body` = ?", "dummyContent")
+                        .append("SET createdDate = NOW(),")
+                        .append("modifiedDate = NOW(),")
+                        .append("title = ?,", "dummyArticle%d".formatted(finalI))
+                        .append("`body` = ?,", "dummyContent")
                         .append("isBlind = 1")
                         .insert();
 
-                Long count = simpleDb.genSql()
-                        .append("SELECT COUNT(*)")
+                Article article = simpleDb.genSql()
+                        .append("SELECT *")
                         .append("FROM article")
-                        .selectLong();
-
+                        .append(" WHERE title = ?", "dummyArticle%d".formatted(finalI))
+                        .selectRow(Article.class);
                 // 결과가 기대한 값인지 확인하고 반환.
-                return count == 7+finalI /* 결과 확인 */;
+                return article /* 결과 확인 */;
             }));
         }
 
+        List<Article> articles = new ArrayList<>();
         // 모든 작업이 완료될 때까지 대기.
-        for (Future<Boolean> future : futures) {
+        for (Future<Article> future : futures) {
             // get()은 작업이 완료될 때까지 대기하고, 작업 결과를 반환합니다.
             // 여기서는 Callable에서 반환한 값이 됩니다.
-            boolean result = future.get();
-
-            // 각 작업의 결과가 기대한 값인지 확인.
-            assertThat(result).isTrue();
+            articles.add(future.get());
         }
 
+        Long count = simpleDb.genSql()
+                .append("SELECT COUNT(*)")
+                .append("FROM article")
+                .selectLong();
+        assertThat(count).isEqualTo(106);
+
+        List<Article> articlesInDb = simpleDb.genSql()
+                .append("SELECT *")
+                .append("FROM article")
+                .selectRows(Article.class);
+        assertThat(articlesInDb).contains(articles.toArray(Article[]::new));
+
         // Thread pool 종료.
-        executorService.shutdown();
+                        executorService.shutdown();
     }
 }

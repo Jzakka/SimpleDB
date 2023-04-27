@@ -7,25 +7,102 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.*;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class SimpleDb {
-    private String url;
+    private final String url;
     private final String username;
     private final String password;
-    private boolean devMode = true;
+    // 동시성 구현을 위한 필드
+    private final Queue<Connection> connectionPool;
+    private final ThreadLocal<Connection> currentConnection;
+    private final ThreadLocal<PreparedStatement> currentStatement;
+    private final ThreadLocal<Boolean> inTransaction;
+    private final ThreadLocal<Boolean> devMode;
+    private final int MAX_POOL_SIZE = 10;
 
-    private boolean inTransaction = false;
-    Connection conn = null;
-    PreparedStatement ps = null;
 
     public SimpleDb(String host, String username, String password, String dbName) {
+        connectionPool = new ConcurrentLinkedDeque<>();
+        currentConnection = new ThreadLocal<>();
+        currentStatement = new ThreadLocal<>();
+        inTransaction = new ThreadLocal<>();
+        devMode = new ThreadLocal<>();
+        devMode.set(true);
+
         this.url = "jdbc:mysql://%s:3306/%s?serverTimezone=Asia/Seoul&useSSL=false".formatted(host, dbName);
         this.username = username;
         this.password = password;
 
-        if (devMode) {
+        if (devMode.get()) {
             truncate(host, username, password);
         }
+
+        initializeConnectionPool();
+    }
+
+    private void initializeConnectionPool() {
+        while (!checkIfConnectionPoolIsFull()) {
+            connectionPool.add(createNewConnectionForPool());
+        }
+    }
+
+    private synchronized boolean checkIfConnectionPoolIsFull() {
+        if (connectionPool.size() < MAX_POOL_SIZE) {
+            return false;
+        }
+        return true;
+    }
+
+    private Connection createNewConnectionForPool() {
+        Connection connection;
+        try {
+            connection = DriverManager.getConnection(url, username, password);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return connection;
+    }
+
+    public synchronized Connection getConnectionFromPool() {
+        Connection conn = connectionPool.poll();
+        currentConnection.set(conn);
+        return conn;
+    }
+
+    public synchronized void returnConnectionToPool() {
+        Connection conn = currentConnection.get();
+        if (conn != null) {
+            connectionPool.add(conn);
+            currentConnection.remove();
+        }
+    }
+
+    public void setCurrentStatement(PreparedStatement ps) {
+        currentStatement.set(ps);
+    }
+
+    public void removeCurrentStatement() {
+        currentStatement.remove();
+    }
+
+    public boolean isInTransaction() {
+        Boolean result = inTransaction.get();
+        return result != null && result;
+    }
+
+    public boolean isDevMode() {
+        Boolean result = devMode.get();
+        return result != null && result;
+    }
+
+    public void setInTransaction(boolean inTransaction) {
+        this.inTransaction.set(inTransaction);
+    }
+
+    public void removeInTransaction() {
+        inTransaction.remove();
     }
 
     private void truncate(String host, String username, String password) {
@@ -66,62 +143,39 @@ public class SimpleDb {
     }
 
     public void setDevMode(boolean devMode) {
-        this.devMode = devMode;
+        this.devMode.set(devMode);
     }
 
     public <T> T run(String query, Object... parameter) {
         String queryType = Query.getQueryType(query);
         try {
-            if (conn == null) {
-                conn = DriverManager.getConnection(url, username, password);
+            if (currentConnection.get() == null) {
+                Connection connectionFromPool = getConnectionFromPool();
+                currentConnection.set(connectionFromPool);
             }
-            ps = prepareStatement(queryType, query, conn, parameter);
+            setCurrentStatement(prepareStatement(queryType, query, currentConnection.get(), parameter));
 
-            logQuery(ps);
+            logQuery(currentStatement.get());
 
-            return Query.execute(ps, queryType);
-        } catch (SQLException e) {
-            rollback();
-            throw new RuntimeException(e);
-        }finally {
-            close(ps);
-
-            if (!inTransaction) {
-                close(conn);
-            }
-        }
-    }
-
-    private void close(Object closableObject) {
-        if (closableObject == null) {
-            return;
-        }
-        if (closableObject instanceof Connection) {
-            closeConnection();
-            return;
-        }
-        if (closableObject instanceof PreparedStatement) {
-            closePreparedStatement();
-            return;
-        }
-        throw new IllegalArgumentException();
-    }
-
-    private void closeConnection() {
-        try {
-            conn.close();
-            conn = null;
+            return Query.execute(currentStatement.get(), queryType);
         } catch (SQLException e) {
             e.printStackTrace();
-        }finally {
-            inTransaction = false;
+            rollback();
+            throw new RuntimeException(e);
+        } finally {
+            closePreparedStatement();
+
+            if (!isInTransaction()) {
+                returnConnectionToPool();
+                removeInTransaction();
+            }
         }
     }
 
     private void closePreparedStatement() {
         try {
-            ps.close();
-            ps = null;
+            currentStatement.get().close();
+            removeCurrentStatement();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -145,7 +199,7 @@ public class SimpleDb {
     }
 
     private void logQuery(PreparedStatement ps) {
-        if (this.devMode) {
+        if (isDevMode()) {
             System.out.println("== rawSql ==");
             System.out.println(ps.toString().split(": ")[1]);
             System.out.println();
@@ -158,34 +212,34 @@ public class SimpleDb {
 
     public void startTransaction() {
         try {
-            inTransaction = true;
-            conn = DriverManager.getConnection(url, username, password);
-            conn.setAutoCommit(false); // disable auto commit
+            setInTransaction(true);
+            currentConnection.set(getConnectionFromPool());
+            currentConnection.get().setAutoCommit(false); // disable auto commit
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void commit() {
-        if (conn != null) {
+        if (currentConnection.get() != null) {
             try {
-                conn.commit();
+                currentConnection.get().commit();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             } finally {
-                closeConnection();
+                returnConnectionToPool();
             }
         }
     }
 
     public void rollback() {
-        if (conn != null) {
+        if (currentConnection.get() != null) {
             try {
-                conn.rollback();
+                currentConnection.get().rollback();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             } finally {
-                closeConnection();
+                returnConnectionToPool();
             }
         }
     }
