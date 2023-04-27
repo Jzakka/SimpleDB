@@ -35,7 +35,7 @@ public class SimpleDb {
         this.username = username;
         this.password = password;
 
-        if (devMode.get()) {
+        if (isDevMode()) {
             truncate(host, username, password);
         }
 
