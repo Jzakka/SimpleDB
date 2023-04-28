@@ -1,9 +1,6 @@
 package com.ll;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -46,6 +43,11 @@ class SimpleDbTest {
     void beforeEach() {
         truncateArticleTable();
         makeArticleTestData();
+    }
+
+    @AfterEach
+    void afterEach() {
+        createArticleTable();
     }
 
     private void makeArticleTestData() {

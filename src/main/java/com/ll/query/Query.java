@@ -13,13 +13,8 @@ import java.util.regex.Pattern;
 
 @AllArgsConstructor
 public enum Query {
-    SELECT(ps -> {
-        List<Map<String, Object>> datum = new ArrayList<>();
-        ResultSet resultSet = ps.executeQuery();
-        mapResult(resultSet, datum);
-        resultSet.close();
-        return datum;
-    }),
+    SHOW(Query::getMappedResult),
+    SELECT(Query::getMappedResult),
     INSERT(ps -> {
         ps.executeUpdate();
         ResultSet generatedKeys = ps.getGeneratedKeys();
@@ -31,6 +26,15 @@ public enum Query {
     }),
     UPDATE(PreparedStatement::executeUpdate),
     DELETE(PreparedStatement::executeUpdate);
+
+    private static List<Map<String, Object>> getMappedResult(PreparedStatement ps) throws SQLException {
+        List<Map<String, Object>> datum = new ArrayList<>();
+        ResultSet resultSet = ps.executeQuery();
+        mapResult(resultSet, datum);
+        resultSet.close();
+        return datum;
+    }
+
     private ThrowingFunction<PreparedStatement, Object, SQLException> method;
 
     public static <T> T execute(PreparedStatement ps, String queryType) throws SQLException {

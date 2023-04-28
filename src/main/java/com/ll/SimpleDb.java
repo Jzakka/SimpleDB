@@ -261,12 +261,22 @@ public class SimpleDb {
         String entityName = entity.getSimpleName();
         String tableName = entityName.toLowerCase();
 
-        run("DROP TABLE IF EXISTS %s;".formatted(tableName));
-        run("""
-                CREATE TABLE %s (
-                     %s
-                );
-                """.formatted(tableName, tablePropertyBuilding(entity)));
+        if (ddlAuto.get().equals("CREATE")) {
+            run("DROP TABLE IF EXISTS %s;".formatted(tableName));
+            run("""
+                    CREATE TABLE %s (
+                         %s
+                    );
+                    """.formatted(tableName, tablePropertyBuilding(entity)));
+        } else if (ddlAuto.get().equals("CREATE_DROP")) {
+            run("DROP TABLE IF EXISTS %s;".formatted(tableName));
+            run("""
+                    CREATE TABLE %s (
+                         %s
+                    );
+                    """.formatted(tableName, tablePropertyBuilding(entity)));
+            run("DROP TABLE IF EXISTS %s;".formatted(tableName));
+        }
     }
 
     private <T> String tablePropertyBuilding(Class<T> entity) {
@@ -286,7 +296,7 @@ public class SimpleDb {
     }
 
     private String sqlTypeOf(Class<?> type) {
-        if(type.isPrimitive()){
+        if (type.isPrimitive()) {
             if (type.isAssignableFrom(int.class) || type.isAssignableFrom(long.class)) {
                 return "INT";
             } else if (type.isAssignableFrom(boolean.class)) {

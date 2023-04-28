@@ -59,7 +59,7 @@ public class Sql {
     }
 
     public Map<String, Object> selectRow() {
-        return selectRows().stream().findFirst().orElseThrow();
+        return selectRows().stream().findFirst().orElse(new HashMap<>());
     }
 
     private List<Map<String, Object>> selectRows() {
