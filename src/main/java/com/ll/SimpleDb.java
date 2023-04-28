@@ -1,14 +1,20 @@
 package com.ll;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ll.converter.EntityMySqlSchemaConverter;
 import com.ll.definition.DdlAuto;
 import com.ll.query.Query;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.*;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
@@ -263,6 +269,7 @@ public class SimpleDb {
                 create(entity, tableName);
                 drop(tableName);
             }
+            case UPDATE->update(entity,tableName);
         }
     }
 
@@ -274,5 +281,21 @@ public class SimpleDb {
     private void drop(String tableName) {
         String dropTableQuery = EntityMySqlSchemaConverter.buildDropTableQuery(tableName);
         run(dropTableQuery);
+    }
+
+    private <T> void update(Class<T> entity, String tableName){
+        String describeTableQuery = EntityMySqlSchemaConverter.buildDescribeTableQuery(tableName);
+        List<ColumnMetaData> fields = genSql().append(describeTableQuery).selectRows(ColumnMetaData.class);
+        String updateTableQuery = EntityMySqlSchemaConverter.buildUpdateTableQuery(entity, fields);
+        run(updateTableQuery);
+    }
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ColumnMetaData{
+        @JsonProperty("COLUMN_NAME")
+        private String COLUMN_NAME;
     }
 }

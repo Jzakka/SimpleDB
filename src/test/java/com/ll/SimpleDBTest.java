@@ -8,6 +8,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -453,8 +454,10 @@ class SimpleDbTest {
 
         List<String> properties = simpleDb.genSql()
                 .append("DESC article")
-                .selectRows(String.class);
+                .selectRows(SimpleDb.ColumnMetaData.class)
+                .stream().map(SimpleDb.ColumnMetaData::getCOLUMN_NAME)
+                .collect(Collectors.toList());
 
-        assertThat(properties).containsExactlyInAnyOrder("id", "createdDate", "modifyDate", "title", "isBlind");
+        assertThat(properties).containsExactlyInAnyOrder("id", "createdDate", "modifiedDate", "title", "isBlind", "body");
     }
 }

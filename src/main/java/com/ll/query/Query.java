@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 @AllArgsConstructor
 public enum Query {
     SHOW(Query::getMappedResult),
+    DESC(Query::getMappedResult),
     SELECT(Query::getMappedResult),
     INSERT(ps -> {
         ps.executeUpdate();

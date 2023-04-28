@@ -2,7 +2,7 @@ package com.ll.definition;
 
 public enum DdlAuto {
     CREATE,
-    CREATE_DROP;
+    CREATE_DROP, UPDATE;
 
 
 }

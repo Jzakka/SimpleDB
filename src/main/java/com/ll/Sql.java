@@ -1,5 +1,6 @@
 package com.ll;
 
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -17,6 +18,7 @@ public class Sql {
     public Sql(SimpleDb simpleDb) {
         this.simpleDb = simpleDb;
         objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
     }
 
     public Sql append(String queryPhrase, Object... parameter) {
