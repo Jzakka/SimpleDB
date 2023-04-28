@@ -2,13 +2,18 @@ package com.ll;
 
 import com.ll.query.Query;
 
+import javax.xml.crypto.Data;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Paths;
 import java.sql.*;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.stream.Collectors;
 
 public class SimpleDb {
     private final String url;
@@ -20,6 +25,7 @@ public class SimpleDb {
     private final ThreadLocal<PreparedStatement> currentStatement;
     private final ThreadLocal<Boolean> inTransaction;
     private final ThreadLocal<Boolean> devMode;
+    private final ThreadLocal<String> ddlAuto;
     private final int MAX_POOL_SIZE = 10;
 
 
@@ -29,6 +35,7 @@ public class SimpleDb {
         currentStatement = new ThreadLocal<>();
         inTransaction = new ThreadLocal<>();
         devMode = new ThreadLocal<>();
+        ddlAuto = new ThreadLocal<>();
         devMode.set(true);
 
         this.url = "jdbc:mysql://%s:3306/%s?serverTimezone=Asia/Seoul&useSSL=false".formatted(host, dbName);
@@ -242,5 +249,60 @@ public class SimpleDb {
                 returnConnectionToPool();
             }
         }
+    }
+
+    public void setDdlAuto(String ddlAutoOption) {
+        ddlAuto.set(ddlAutoOption);
+
+
+    }
+
+    public <T> void definite(Class<T> entity) {
+        String entityName = entity.getSimpleName();
+        String tableName = entityName.toLowerCase();
+
+        run("DROP TABLE IF EXISTS %s;".formatted(tableName));
+        run("""
+                CREATE TABLE %s (
+                     %s
+                );
+                """.formatted(tableName, tablePropertyBuilding(entity)));
+    }
+
+    private <T> String tablePropertyBuilding(Class<T> entity) {
+        Field[] fields = entity.getDeclaredFields();
+        return Arrays.stream(fields).map(this::entityFieldToSchema).collect(Collectors.joining(",\n"));
+    }
+
+    private String entityFieldToSchema(Field field) {
+        String fieldName = field.getName();
+        if (fieldName.equals("id")) {
+            return """
+                    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                    PRIMARY KEY(id)""";
+        }
+        Class<?> type = field.getType();
+        return fieldName + " " + sqlTypeOf(type) + " NOT NULL";
+    }
+
+    private String sqlTypeOf(Class<?> type) {
+        if(type.isPrimitive()){
+            if (type.isAssignableFrom(int.class) || type.isAssignableFrom(long.class)) {
+                return "INT";
+            } else if (type.isAssignableFrom(boolean.class)) {
+                return "BIT(1)";
+            }
+        } else {
+            if (type.isAssignableFrom(Integer.class) || type.isAssignableFrom(Long.class)) {
+                return "INT";
+            } else if (type.isAssignableFrom(Boolean.class)) {
+                return "BIT(1)";
+            } else if (type.isAssignableFrom(LocalDateTime.class) || type.isAssignableFrom(Data.class)) {
+                return "DATETIME";
+            } else if (type.isAssignableFrom(String.class)) {
+                return "VARCHAR(255)";
+            }
+        }
+        return "";
     }
 }
