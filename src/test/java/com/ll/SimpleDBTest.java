@@ -410,4 +410,31 @@ class SimpleDbTest {
 
         assertThat(count).isZero();
     }
+
+    @Test
+    void DDL_AUTO_테스트_CREATE_DROP() {
+        simpleDb.setDdlAuto("CREATE_DROP");
+
+        /* DROP TABLE article IF EXISTS;
+
+           CREATE TABLE article(
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                PRIMARY KEY(id),
+                createdDate DATETIME NOT NULL,
+                modifiedDate DATETIME NOT NULL,
+                title VARCHAR(100) NOT NULL,
+                `body` TEXT NOT NULL,
+                isBlind BIT(1) NOT NULL DEFAULT(0)
+           )
+
+           DROP TABLE article IF EXISTS;
+         */
+        simpleDb.definite(Article.class);
+
+        Map<String, Object> tables = simpleDb.genSql()
+                .append("show tables")
+                .selectRow();
+
+        assertThat(tables).isEmpty();
+    }
 }
