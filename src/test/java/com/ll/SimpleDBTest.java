@@ -384,4 +384,31 @@ class SimpleDbTest {
                 .selectLong();
         assertThat(count).isEqualTo(7);
     }
+
+    @Test
+    void DDL_AUTO_테스트_CREATE() {
+        simpleDb.setDdlAuto("CREATE");
+
+
+        /* DROP TABLE article IF EXISTS;
+
+           CREATE TABLE article(
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                PRIMARY KEY(id),
+                createdDate DATETIME NOT NULL,
+                modifiedDate DATETIME NOT NULL,
+                title VARCHAR(100) NOT NULL,
+                `body` TEXT NOT NULL,
+                isBlind BIT(1) NOT NULL DEFAULT(0)
+           )
+         */
+        simpleDb.genSql().selectRow(Article.class);
+
+        Long count = simpleDb.genSql()
+                .append("select count(*)")
+                .append("from article")
+                .selectLong();
+
+        assertThat(count).isZero();
+    }
 }
