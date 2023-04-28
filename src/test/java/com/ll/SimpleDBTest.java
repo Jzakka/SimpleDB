@@ -389,7 +389,6 @@ class SimpleDbTest {
     void DDL_AUTO_테스트_CREATE() {
         simpleDb.setDdlAuto("CREATE");
 
-
         /* DROP TABLE article IF EXISTS;
 
            CREATE TABLE article(
@@ -402,7 +401,7 @@ class SimpleDbTest {
                 isBlind BIT(1) NOT NULL DEFAULT(0)
            )
          */
-        simpleDb.genSql().selectRow(Article.class);
+        simpleDb.definite(Article.class);
 
         Long count = simpleDb.genSql()
                 .append("select count(*)")
