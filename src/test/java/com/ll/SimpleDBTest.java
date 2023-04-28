@@ -440,4 +440,21 @@ class SimpleDbTest {
 
         assertThat(tables).isEmpty();
     }
+
+    @Test
+    void DDL_AUTO_테스트_UPDATE() {
+        simpleDb.run("""
+                ALTER TABLE article
+                DROP COLUMN `BODY`;
+                """);
+
+        simpleDb.setDdlAuto(DdlAuto.UPDATE);
+        simpleDb.definite(Article.class);
+
+        List<String> properties = simpleDb.genSql()
+                .append("DESC article")
+                .selectRows(String.class);
+
+        assertThat(properties).containsExactlyInAnyOrder("id", "createdDate", "modifyDate", "title", "isBlind");
+    }
 }
