@@ -1,5 +1,6 @@
 package com.ll;
 
+import com.ll.definition.DdlAuto;
 import org.junit.jupiter.api.*;
 
 import java.time.LocalDateTime;
@@ -389,7 +390,7 @@ class SimpleDbTest {
 
     @Test
     void DDL_AUTO_테스트_CREATE() {
-        simpleDb.setDdlAuto("CREATE");
+        simpleDb.setDdlAuto(DdlAuto.CREATE);
 
         /* DROP TABLE article IF EXISTS;
 
@@ -415,7 +416,7 @@ class SimpleDbTest {
 
     @Test
     void DDL_AUTO_테스트_CREATE_DROP() {
-        simpleDb.setDdlAuto("CREATE_DROP");
+        simpleDb.setDdlAuto(DdlAuto.CREATE_DROP);
 
         /* DROP TABLE article IF EXISTS;
 
