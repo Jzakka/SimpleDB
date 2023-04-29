@@ -1,5 +1,6 @@
 package com.ll;
 
+import com.ll.converter.ColumnMetaData;
 import com.ll.definition.DdlAuto;
 import com.ll.exception.PersistenceException;
 import org.junit.jupiter.api.*;
@@ -392,7 +393,7 @@ class SimpleDbTest {
     }
 
     @Test
-    void DDL_AUTO_테스트_CREATE() {
+    void DDL_AUTO_테스트_CREATE() throws PersistenceException {
         simpleDb.setDdlAuto(DdlAuto.CREATE);
 
         /* DROP TABLE article IF EXISTS;
@@ -418,7 +419,7 @@ class SimpleDbTest {
     }
 
     @Test
-    void DDL_AUTO_테스트_CREATE_DROP() {
+    void DDL_AUTO_테스트_CREATE_DROP() throws PersistenceException {
         simpleDb.setDdlAuto(DdlAuto.CREATE_DROP);
 
         /* DROP TABLE article IF EXISTS;
@@ -445,7 +446,7 @@ class SimpleDbTest {
     }
 
     @Test
-    void DDL_AUTO_테스트_UPDATE() {
+    void DDL_AUTO_테스트_UPDATE() throws PersistenceException {
         simpleDb.run("""
                 ALTER TABLE article
                 DROP COLUMN `BODY`;
@@ -456,8 +457,8 @@ class SimpleDbTest {
 
         List<String> properties = simpleDb.genSql()
                 .append("DESC article")
-                .selectRows(SimpleDb.ColumnMetaData.class)
-                .stream().map(SimpleDb.ColumnMetaData::getCOLUMN_NAME)
+                .selectRows(ColumnMetaData.class)
+                .stream().map(ColumnMetaData::getCOLUMN_NAME)
                 .collect(Collectors.toList());
 
         assertThat(properties).containsExactlyInAnyOrder("id", "createdDate", "modifiedDate", "title", "isBlind", "body");

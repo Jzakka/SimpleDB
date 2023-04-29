@@ -1,22 +1,22 @@
 package com.ll;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.ll.converter.ColumnMetaData;
 import com.ll.converter.EntityMySqlSchemaConverter;
 import com.ll.definition.DdlAuto;
+import com.ll.exception.PersistenceException;
 import com.ll.query.Query;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Paths;
 import java.sql.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.stream.Collectors;
 
 public class SimpleDb {
     private final String url;
@@ -255,7 +255,7 @@ public class SimpleDb {
         }
     }
 
-    public <T> void definite(Class<T> entity) {
+    public <T> void definite(Class<T> entity) throws PersistenceException {
         String entityName = entity.getSimpleName();
         String tableName = entityName.toLowerCase();
 
@@ -269,7 +269,8 @@ public class SimpleDb {
                 create(entity, tableName);
                 drop(tableName);
             }
-            case UPDATE->update(entity,tableName);
+            case UPDATE -> update(entity, tableName);
+            case VALIDATE -> validate(entity, tableName);
         }
     }
 
@@ -283,19 +284,31 @@ public class SimpleDb {
         run(dropTableQuery);
     }
 
-    private <T> void update(Class<T> entity, String tableName){
+    private <T> void update(Class<T> entity, String tableName) {
         String describeTableQuery = EntityMySqlSchemaConverter.buildDescribeTableQuery(tableName);
         List<ColumnMetaData> fields = genSql().append(describeTableQuery).selectRows(ColumnMetaData.class);
         String updateTableQuery = EntityMySqlSchemaConverter.buildUpdateTableQuery(entity, fields);
         run(updateTableQuery);
     }
 
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Getter
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class ColumnMetaData{
-        @JsonProperty("COLUMN_NAME")
-        private String COLUMN_NAME;
+    private <T> void validate(Class<T> entity, String tableName) throws PersistenceException {
+        String describeTableQuery = EntityMySqlSchemaConverter.buildDescribeTableQuery(tableName);
+        List<String> schemaFieldNames = genSql()
+                .append(describeTableQuery)
+                .selectRows(ColumnMetaData.class).stream()
+                .map(ColumnMetaData::getCOLUMN_NAME).toList();
+        List<String> entityFieldNames = Arrays.stream(entity.getDeclaredFields())
+                .map(Field::getName)
+                .toList();
+
+        if (schemaFieldNames.size() != entityFieldNames.size()) {
+            throw new PersistenceException("엔티티와 테이블의 속성개수가 다릅니다.");
+        }
+
+        for (String entityFieldName : entityFieldNames) {
+            if (!schemaFieldNames.contains(entityFieldName)) {
+                throw new PersistenceException("엔티티 필드 %s가 테이블에선 발견되지 않았습니다.".formatted(entityFieldName));
+            }
+        }
     }
 }

@@ -65,11 +65,11 @@ public class EntityMySqlSchemaConverter {
         return "";
     }
 
-    public static <T> String buildUpdateTableQuery(Class<T> entity, List<SimpleDb.ColumnMetaData> tableFields) {
+    public static <T> String buildUpdateTableQuery(Class<T> entity, List<ColumnMetaData> tableFields) {
         Field[] entityFields = entity.getDeclaredFields();
         List<String> updatedFields = new ArrayList<>();
         Set<String> tableFieldNames = tableFields.stream()
-                .map(SimpleDb.ColumnMetaData::getCOLUMN_NAME)
+                .map(ColumnMetaData::getCOLUMN_NAME)
                 .collect(Collectors.toSet());
         for (Field entityField : entityFields) {
             String entityFieldName = entityField.getName();
