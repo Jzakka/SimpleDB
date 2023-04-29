@@ -474,4 +474,17 @@ class SimpleDbTest {
         simpleDb.setDdlAuto(DdlAuto.VALIDATE);
         assertThatThrownBy(()->simpleDb.definite(Article.class)).isInstanceOf(PersistenceException.class);
     }
+
+    @Test
+    void DDL_AUTO_테스트_NONE() throws PersistenceException {
+        simpleDb.setDdlAuto(DdlAuto.NONE);
+        simpleDb.definite(Article.class);
+
+        Long count = simpleDb.genSql()
+                .append("select count(*)")
+                .append("from article")
+                .selectLong();
+
+        assertThat(count).isEqualTo(6);
+    }
 }
