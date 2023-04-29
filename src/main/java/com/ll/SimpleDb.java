@@ -2,6 +2,7 @@ package com.ll;
 
 import com.ll.converter.ColumnMetaData;
 import com.ll.converter.EntityMySqlSchemaConverter;
+import com.ll.converter.MySqlTypeMap;
 import com.ll.definition.DdlAuto;
 import com.ll.exception.PersistenceException;
 import com.ll.query.Query;
@@ -14,8 +15,10 @@ import java.nio.file.Paths;
 import java.sql.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.stream.Collectors;
 
 public class SimpleDb {
     private final String url;
@@ -293,21 +296,32 @@ public class SimpleDb {
 
     private <T> void validate(Class<T> entity, String tableName) throws PersistenceException {
         String describeTableQuery = EntityMySqlSchemaConverter.buildDescribeTableQuery(tableName);
-        List<String> schemaFieldNames = genSql()
-                .append(describeTableQuery)
-                .selectRows(ColumnMetaData.class).stream()
-                .map(ColumnMetaData::getCOLUMN_NAME).toList();
-        List<String> entityFieldNames = Arrays.stream(entity.getDeclaredFields())
-                .map(Field::getName)
-                .toList();
 
-        if (schemaFieldNames.size() != entityFieldNames.size()) {
+        List<ColumnMetaData> tableFields = genSql()
+                .append(describeTableQuery)
+                .selectRows(ColumnMetaData.class);
+
+        Map<String, ColumnMetaData> metaDatum = tableFields.stream()
+                .collect(Collectors.toMap(ColumnMetaData::getCOLUMN_NAME, columnMetaData -> columnMetaData));
+
+        Field[] fields = entity.getDeclaredFields();
+
+
+        if (metaDatum.size() != fields.length) {
             throw new PersistenceException("엔티티와 테이블의 속성개수가 다릅니다.");
         }
 
-        for (String entityFieldName : entityFieldNames) {
-            if (!schemaFieldNames.contains(entityFieldName)) {
+        for (Field field:fields) {
+            String entityFieldName = field.getName();
+            Class<?> entityFieldType = field.getType();
+            if (!metaDatum.containsKey(entityFieldName)) {
                 throw new PersistenceException("엔티티 필드 %s가 테이블에선 발견되지 않았습니다.".formatted(entityFieldName));
+            } else  {
+                String schemaTypeName = metaDatum.get(entityFieldName).getCOLUMN_TYPE();
+                String entityTypeName = MySqlTypeMap.mySqlTypeOf(entityFieldType).toLowerCase();
+
+                if (EntityMySqlSchemaConverter.typeNameUnmatch(schemaTypeName,entityTypeName))
+                throw new PersistenceException("필드 %s의 타입이 일치하지 않습니다. 엔티티:%s, 테이블:%s".formatted(entityFieldName, entityTypeName.toUpperCase(), schemaTypeName));
             }
         }
     }

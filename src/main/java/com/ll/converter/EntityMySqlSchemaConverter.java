@@ -42,6 +42,7 @@ public class EntityMySqlSchemaConverter {
         List<String> updatedFields = new ArrayList<>();
         Map<String, ColumnMetaData> metaDatum = tableFields.stream()
                 .collect(Collectors.toMap(ColumnMetaData::getCOLUMN_NAME, columnMetaData -> columnMetaData));
+
         for (Field entityField : entityFields) {
             String entityFieldName = entityField.getName();
             Class<?> entityFieldType = entityField.getType();
@@ -65,7 +66,7 @@ public class EntityMySqlSchemaConverter {
         return "ALTER TABLE " + entity.getSimpleName().toLowerCase() + "\n" + String.join(",\n", updatedFields);
     }
 
-    private static boolean typeNameUnmatch(String schemaTypeName, String entityTypeName) {
+    public static boolean typeNameUnmatch(String schemaTypeName, String entityTypeName) {
         return !schemaTypeName.equals(entityTypeName);
     }
 
