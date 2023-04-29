@@ -1,6 +1,7 @@
 package com.ll;
 
 import com.ll.definition.DdlAuto;
+import com.ll.exception.PersistenceException;
 import org.junit.jupiter.api.*;
 
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SimpleDbTest {
@@ -459,5 +461,16 @@ class SimpleDbTest {
                 .collect(Collectors.toList());
 
         assertThat(properties).containsExactlyInAnyOrder("id", "createdDate", "modifiedDate", "title", "isBlind", "body");
+    }
+
+    @Test
+    void DDL_AUTO_테스트_VALIDATE() {
+        simpleDb.run("""
+                ALTER TABLE article
+                DROP COLUMN `BODY`;
+                """);
+
+        simpleDb.setDdlAuto(DdlAuto.VALIDATE);
+        assertThatThrownBy(()->simpleDb.definite(Article.class)).isInstanceOf(PersistenceException.class);
     }
 }
