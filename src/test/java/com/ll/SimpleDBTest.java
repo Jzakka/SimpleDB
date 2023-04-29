@@ -472,7 +472,9 @@ class SimpleDbTest {
                 """);
 
         simpleDb.setDdlAuto(DdlAuto.VALIDATE);
-        assertThatThrownBy(()->simpleDb.definite(Article.class)).isInstanceOf(PersistenceException.class);
+        assertThatThrownBy(()->simpleDb.definite(Article.class))
+                .isInstanceOf(PersistenceException.class)
+                .hasMessage("엔티티와 테이블의 속성개수가 다릅니다.");
     }
 
     @Test

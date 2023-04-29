@@ -41,28 +41,7 @@ public class EntityMySqlSchemaConverter {
     }
 
     private static String fieldDefinition(String fieldName, Class<?> type) {
-        return fieldName + " " + sqlTypeOf(type) + " NOT NULL";
-    }
-
-    private static String sqlTypeOf(Class<?> type) {
-        if (type.isPrimitive()) {
-            if (type.isAssignableFrom(int.class) || type.isAssignableFrom(long.class)) {
-                return "INT";
-            } else if (type.isAssignableFrom(boolean.class)) {
-                return "BIT(1)";
-            }
-        } else {
-            if (type.isAssignableFrom(Integer.class) || type.isAssignableFrom(Long.class)) {
-                return "INT";
-            } else if (type.isAssignableFrom(Boolean.class)) {
-                return "BIT(1)";
-            } else if (type.isAssignableFrom(LocalDateTime.class) || type.isAssignableFrom(Data.class)) {
-                return "DATETIME";
-            } else if (type.isAssignableFrom(String.class)) {
-                return "VARCHAR(255)";
-            }
-        }
-        return "";
+        return fieldName + " " + MySqlTypeMap.mySqlTypeOf(type) + " NOT NULL";
     }
 
     public static <T> String buildUpdateTableQuery(Class<T> entity, List<ColumnMetaData> tableFields) {

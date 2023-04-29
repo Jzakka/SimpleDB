@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.stream.Collectors;
 
 public class SimpleDb {
     private final String url;
@@ -40,6 +39,7 @@ public class SimpleDb {
         devMode = new ThreadLocal<>();
         ddlAuto = new ThreadLocal<>();
         devMode.set(true);
+        ddlAuto.set(DdlAuto.NONE);
 
         this.url = "jdbc:mysql://%s:3306/%s?serverTimezone=Asia/Seoul&useSSL=false".formatted(host, dbName);
         this.username = username;
