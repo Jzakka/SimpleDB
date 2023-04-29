@@ -451,6 +451,10 @@ class SimpleDbTest {
                 ALTER TABLE article
                 DROP COLUMN `BODY`;
                 """);
+        simpleDb.run("""
+                ALTER TABLE article
+                MODIFY title TEXT;
+                """);
 
         simpleDb.setDdlAuto(DdlAuto.UPDATE);
         simpleDb.definite(Article.class);

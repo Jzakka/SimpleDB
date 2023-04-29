@@ -10,7 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ColumnMetaData{
+public class ColumnMetaData {
     @JsonProperty("COLUMN_NAME")
     private String COLUMN_NAME;
+    @JsonProperty("COLUMN_TYPE")
+    private String COLUMN_TYPE;
 }

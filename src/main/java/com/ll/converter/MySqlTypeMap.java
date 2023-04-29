@@ -34,7 +34,7 @@ public class MySqlTypeMap {
         mySqlTypeMap.put(boolean.class, "BIT(1)");
         mySqlTypeMap.put(Date.class, "DATE");
         mySqlTypeMap.put(java.sql.Date.class, "DATE");
-        mySqlTypeMap.put(LocalDateTime.class, "DATE");
+        mySqlTypeMap.put(LocalDateTime.class, "DATETIME");
         mySqlTypeMap.put(Timestamp.class, "TIMESTAMP");
         mySqlTypeMap.put(Time.class, "TIME");
         mySqlTypeMap.put(Character.class, "CHAR");

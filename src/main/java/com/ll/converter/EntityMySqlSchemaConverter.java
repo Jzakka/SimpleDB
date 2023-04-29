@@ -5,10 +5,7 @@ import com.ll.SimpleDb;
 import javax.xml.crypto.Data;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class EntityMySqlSchemaConverter {
@@ -47,14 +44,17 @@ public class EntityMySqlSchemaConverter {
     public static <T> String buildUpdateTableQuery(Class<T> entity, List<ColumnMetaData> tableFields) {
         Field[] entityFields = entity.getDeclaredFields();
         List<String> updatedFields = new ArrayList<>();
-        Set<String> tableFieldNames = tableFields.stream()
-                .map(ColumnMetaData::getCOLUMN_NAME)
-                .collect(Collectors.toSet());
+        Map<String, ColumnMetaData> metaDatum = tableFields.stream()
+                .collect(Collectors.toMap(ColumnMetaData::getCOLUMN_NAME, columnMetaData -> columnMetaData));
         for (Field entityField : entityFields) {
             String entityFieldName = entityField.getName();
-            if (!tableFieldNames.contains(entityFieldName)) {
-                String definition = "ADD COLUMN " + fieldDefinition(entityFieldName, entityField.getType());
+            Class<?> entityFieldType = entityField.getType();
+            if (!metaDatum.containsKey(entityFieldName)) {
+                String definition = "ADD COLUMN " + fieldDefinition(entityFieldName, entityFieldType);
                 updatedFields.add(definition);
+            }else if(!metaDatum.get(entityFieldName).getCOLUMN_TYPE().equals(MySqlTypeMap.mySqlTypeOf(entityFieldType).toLowerCase())){
+                String modify = "MODIFY " + entityFieldName + " " + MySqlTypeMap.mySqlTypeOf(entityFieldType) + " NOT NULL";
+                updatedFields.add(modify);
             }
         }
 
