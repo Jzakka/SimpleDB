@@ -20,7 +20,9 @@ public enum Query {
         ps.executeUpdate();
         ResultSet generatedKeys = ps.getGeneratedKeys();
         if (generatedKeys.next()) {
-            return generatedKeys.getLong(1);
+            long key = generatedKeys.getLong(1);
+            generatedKeys.close();
+            return key;
         }
         generatedKeys.close();
         return null;
