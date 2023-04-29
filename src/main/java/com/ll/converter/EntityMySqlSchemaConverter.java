@@ -1,10 +1,6 @@
 package com.ll.converter;
 
-import com.ll.SimpleDb;
-
-import javax.xml.crypto.Data;
 import java.lang.reflect.Field;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -52,9 +48,14 @@ public class EntityMySqlSchemaConverter {
             if (!metaDatum.containsKey(entityFieldName)) {
                 String definition = "ADD COLUMN " + fieldDefinition(entityFieldName, entityFieldType);
                 updatedFields.add(definition);
-            }else if(!metaDatum.get(entityFieldName).getCOLUMN_TYPE().equals(MySqlTypeMap.mySqlTypeOf(entityFieldType).toLowerCase())){
-                String modify = "MODIFY " + entityFieldName + " " + MySqlTypeMap.mySqlTypeOf(entityFieldType) + " NOT NULL";
-                updatedFields.add(modify);
+            }else {
+                String schemaTypeName = metaDatum.get(entityFieldName).getCOLUMN_TYPE();
+                String entityTypeName = MySqlTypeMap.mySqlTypeOf(entityFieldType).toLowerCase();
+
+                if(typeNameUnmatch(schemaTypeName, entityTypeName)){
+                    String modify = "MODIFY " + fieldDefinition(entityFieldName, entityFieldType);
+                    updatedFields.add(modify);
+                }
             }
         }
 
@@ -62,6 +63,10 @@ public class EntityMySqlSchemaConverter {
             return ";";
         }
         return "ALTER TABLE " + entity.getSimpleName().toLowerCase() + "\n" + String.join(",\n", updatedFields);
+    }
+
+    private static boolean typeNameUnmatch(String schemaTypeName, String entityTypeName) {
+        return !schemaTypeName.equals(entityTypeName);
     }
 
     public static String buildDescribeTableQuery(String tableName) {
